@@ -182,7 +182,9 @@ Ext.grid.Lockable.override({
 
                 guaranteeRange(rangeStart, rangeEnd);
 
-                me.onNormalViewScroll();
+                if (this.getView().rendered) {
+                    me.onNormalViewScroll();
+                }
             };
 
             treeStore.on({
