@@ -6,10 +6,8 @@ Ext.tree.View.addMembers({
         var me = this,
             treeStore = me.panel.getStore();
 
-        if (me.initialConfig.animate === undefined) {
-            me.animate = Ext.enableFx;
-        }
-
+        me.animate = false;
+        
         // BEGIN OF MODIFICATIONS
         me.store = me.providedStore || new Ext.data.NodeStore({
             treeStore: treeStore,
