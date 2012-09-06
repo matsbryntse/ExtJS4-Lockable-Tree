@@ -108,10 +108,19 @@ Ext.grid.Lockable.override({
         var treeStore = me.store;
 
         var verticalScroller = me.normalGrid.verticalScroller;
+		
+		// Buffering settings on the PagingScroller can be changed here
+		verticalScroller.leadingBufferZone = 15;
+		verticalScroller.trailingBufferZone = 10;
+		verticalScroller.scrollToLoadBuffer = 200;
+		verticalScroller.numFromEdge = 2;
+		
+		// Initial view size can be changed here
+		defaultViewSize = 80;
 
         // this function is covered with "203_buffered_view_2.t.js" in Gantt
         var guaranteeRange = function (rangeStart, rangeEnd) {
-            var pageSize = treeStore.viewSize || 50;
+            var pageSize = treeStore.viewSize || defaultViewSize;
             var totalCount = normalStore.getTotalCount();
 
             if (totalCount) {
@@ -159,7 +168,7 @@ Ext.grid.Lockable.override({
 
                 normalStore.resumeEvents();
 
-                guaranteeRange(0, treeStore.viewSize || 50);
+                guaranteeRange(0, treeStore.viewSize || defaultViewSize);
             } else {
                 normalStore.resumeEvents();
 
