@@ -182,7 +182,7 @@ Ext.grid.Lockable.override({
 
                 guaranteeRange(rangeStart, rangeEnd);
 
-                if (this.getView().rendered) {
+                if (normalView.rendered) {
                     me.onNormalViewScroll();
                 }
             };
