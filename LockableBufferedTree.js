@@ -57,8 +57,9 @@ Ext.grid.Lockable.override({
 
             refreshFromTree: function () {
                 var eventsWereSuspended = this.eventsSuspended;
-
-                this.suspendEvents();
+                if(!eventsWereSuspended) {
+                    this.suspendEvents();
+                }
 
                 this.removeAll();
 
@@ -182,7 +183,7 @@ Ext.grid.Lockable.override({
 
                 guaranteeRange(rangeStart, rangeEnd);
 
-                if (this.getView().rendered) {
+                if (normalView.rendered) {
                     me.onNormalViewScroll();
                 }
             };
@@ -217,7 +218,7 @@ Ext.grid.Lockable.override({
             var prevOnGuaranteedRange = verticalScroller.onGuaranteedRange;
 
             // native buffering is based on the assumption, that "refresh" event
-            // from the store will trigger the view refresh - thats not true for tree case 
+            // from the store will trigger the view refresh - thats not true for tree case
             // (search for "blockRefresh" in Ext sources)
             // so, after "onGuaranteedRange" we need to perform view refresh manually (for both locked/normal views)
             // we are doing "light" refresh - the one, not causing any changes in layout
@@ -226,13 +227,19 @@ Ext.grid.Lockable.override({
 
                 Ext.suspendLayouts();
 
-                normalView.refreshSize = Ext.emptyFn;
-                lockedView.refreshSize = Ext.emptyFn;
+                //normalView.refreshSize = Ext.emptyFn;
+                //lockedView.refreshSize = Ext.emptyFn;
+                var normOldVal = normalView.hasLoadingHeight,
+                    lockOldVal = lockedView.hasLoadingHeight;
+                normalView.hasLoadingHeight = true;
+                lockedView.hasLoadingHeight = true;
 
                 topView.refresh();
 
-                delete normalView.refreshSize;
-                delete lockedView.refreshSize;
+                normalView.hasLoadingHeight = normOldVal;
+                lockedView.hasLoadingHeight = lockOldVal;
+                //delete normalView.refreshSize;
+                //delete lockedView.refreshSize;
 
                 Ext.resumeLayouts();
             };
@@ -244,7 +251,7 @@ Ext.grid.Lockable.override({
             // this will:
             // 1) update the `store` of the scroller from TreeStore instance to NodeStore
             // 2) will update the listener of `guaranteedrange` event
-            //    so it will use the override for `onGuaranteedRange` from above 
+            //    so it will use the override for `onGuaranteedRange` from above
             verticalScroller.bindView(normalView);
 
             delete normalView.el;
@@ -252,8 +259,9 @@ Ext.grid.Lockable.override({
     },
 
     updateSpacer: function () {
-        var lockedView = this.lockedGrid.getView();
-        if (lockedView.rendered && lockedView.el.child('table')) {
+        var lockedView = this.lockedGrid.getView(),
+            normalView = this.normalGrid.getView();
+        if (normalView.rendered && lockedView.rendered && lockedView.el.child('table')) {
             var me = this,
             // This affects scrolling all the way to the bottom of a locked grid
             // additional test, sort a column and make sure it synchronizes
@@ -262,8 +270,8 @@ Ext.grid.Lockable.override({
                 spacerId = lockedViewEl.dom.id + '-spacer',
                 spacerHeight = (normalViewEl.offsetHeight - normalViewEl.clientHeight) + 'px';
 
-            // put the spacer inside of stretcher with special css class (see below), which will cause the 
-            // stretcher to increase its height on the height of spacer 
+            // put the spacer inside of stretcher with special css class (see below), which will cause the
+            // stretcher to increase its height on the height of spacer
             var spacerParent = this.store.buffered ? me.normalGrid.verticalScroller.stretcher.item(0) : lockedViewEl;
 
             me.spacerEl = Ext.getDom(spacerId);
@@ -288,7 +296,7 @@ Ext.grid.Lockable.override({
             return;
         }
 
-        // make sure the listener for "scroll" event is the last one 
+        // make sure the listener for "scroll" event is the last one
         // (it should be called _after_ same listener of the PagingScroller)
         // only relevant for IE generally, but won't hurt for other browsers too
         normalGrid.getView().el.un('scroll', this.onNormalViewScroll, this);
@@ -307,11 +315,18 @@ Ext.grid.Lockable.override({
             }
         }, lockedViewEl.dom.firstChild);
 
-        var verticalScroller = normalGrid.verticalScroller;
+        var verticalScroller = normalGrid.verticalScroller,
+            stretcher = verticalScroller.stretcher;
 
-        verticalScroller.stretcher.addCls('x-stretcher');
 
-        verticalScroller.stretcher = new Ext.dom.CompositeElement([lockedStretcher, verticalScroller.stretcher]);
+        stretcher.addCls('x-stretcher');
+
+        if(stretcher instanceof Ext.dom.CompositeElement) {
+            stretcher.elements.push(lockedStretcher);
+        } else {
+            verticalScroller.stretcher = new Ext.dom.CompositeElement([lockedStretcher, stretcher]);
+        }
+
     }
 });
 
