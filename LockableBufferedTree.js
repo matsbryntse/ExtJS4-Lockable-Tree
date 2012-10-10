@@ -288,7 +288,6 @@ Ext.grid.Lockable.override({
     },
 
     onLockedViewRender: function () {
-        return;
         var normalGrid = this.normalGrid;
 
         if (!normalGrid.rendered) {
